@@ -1,0 +1,279 @@
+#! /usr/bin/env python
+
+'''Address Book'''
+
+import sys
+import os
+import argparse
+from PyQt5 import uic, QtWidgets
+import yaml
+
+COLW = 4
+OVERWRITE = '%s already exists - overwrite?'
+
+def addline(layout, placeholder, items):
+    '''
+    Add QLineEdit/QComboBox line
+    '''
+
+    lineedit = QtWidgets.QLineEdit()
+    lineedit.setPlaceholderText(placeholder)
+    layout.addWidget(lineedit, layout.rowCount(), 0)
+
+    combo = QtWidgets.QComboBox()
+    combo.addItems(items)
+    combo.setEditable(True)
+    layout.addWidget(combo, layout.rowCount() - 1, 1)
+
+    return lineedit, combo
+
+
+class MainWindow(QtWidgets.QMainWindow):
+    '''
+    Main window class
+    '''
+
+    def __init__(self, path, contact):
+        '''
+        Initialise window
+        '''
+
+        super(MainWindow, self).__init__()
+
+        self.contact = contact
+
+        self.win = uic.loadUi('addr.ui', self)
+        self.overwritemsg = QtWidgets.QMessageBox()
+        self.unsavedmsg = QtWidgets.QMessageBox()
+
+        if path:
+            self.src = path
+            self.dirname = os.path.dirname(path)
+            self.dirname = self.dirname + '/' if self.dirname else ''
+
+            basename = os.path.basename(path)
+            self.win.setWindowTitle(basename)
+            self.win.names.setText(basename)
+        else:
+            self.src = None
+            self.win.setWindowTitle(__doc__)
+            self.dirname = ''
+
+        try:
+            self.win.address.setText(self.contact['address'][0])
+            self.win.addresslabel.setCurrentText(self.contact['address'][1])
+        except (KeyError, TypeError):
+            pass
+
+        try:
+            self.loadlineedits('phones',
+                               self.win.firstPhone,
+                               self.win.firstPhoneLabel,
+                               self.addphone)
+        except (KeyError, TypeError):
+            pass
+
+        try:
+            self.loadlineedits('mails',
+                               self.win.firstMail,
+                               self.win.firstMailLabel,
+                               self.addmail)
+        except (KeyError, TypeError):
+            pass
+
+        try:
+            self.win.comments.setText(self.contact['comments'])
+        except (KeyError, TypeError):
+            pass
+
+
+    def showsave(self):
+        '''
+        Show save status message
+        '''
+
+        self.win.status.showMessage("Saved %s" % self.src, 60000)
+
+
+    def loadlineedits(self, key, first, firstlabel, function):
+        '''
+        Load multiple QLineEdits
+        '''
+
+        first.setText(self.contact[key][0][0])
+        firstlabel.setCurrentText(self.contact[key][0][1])
+
+        for value, label in self.contact[key][1:]:
+            lineedit, combo = function()
+            lineedit.setText(value)
+            combo.setCurrentText(label)
+
+
+    def addphone(self):
+        '''
+        Add phone QLineEdit/QComboBox line
+        '''
+
+        return addline(self.win.phones,
+                       '+44 0123 456789',
+                       ['Home', 'Work', 'Mobile', 'Fax'])
+
+
+    def addmail(self):
+        '''
+        Add mail QLineEdit/QComboBox line
+        '''
+
+        return addline(self.win.mails,
+                       'John.Doe@example.com',
+                       ['Home', 'Work'])
+
+
+    def closeEvent(self, event): # pylint: disable=invalid-name
+        '''
+        Process close event
+        '''
+
+        dst, contact = self.collect()
+        if dst != self.src or contact != self.contact:
+            msg = "Quit without saving changes made to %s?" % dst
+            rpl = self.unsavedmsg.question(self, "Quit Saving?", msg)
+            if rpl == QtWidgets.QMessageBox.Yes:
+                event.accept()
+            else:
+                event.ignore()
+
+
+    def collect(self):
+        '''
+        Collect data from form
+        '''
+
+        contact = {}
+
+        def getfields(layout):
+            '''
+            Get fields from layout
+            '''
+
+            values = []
+            for i in  range(layout.rowCount()):
+                value = str(layout.itemAtPosition(i, 0).widget().text())
+                label = str(layout.itemAtPosition(i, 1).widget().currentText())
+                if value:
+                    values.append([value, label])
+
+            return values
+
+
+        # Get names
+        names = self.win.names.text().strip()
+        dst = self.dirname + names if names else None
+
+        # Get address
+        address = self.win.address.toPlainText()
+        if address:
+            contact['address'] = [str(address),
+                                  str(self.win.addresslabel.currentText())]
+
+        # Get phone numbers
+        phones = getfields(self.win.phones)
+        if phones:
+            contact['phones'] = phones
+
+        # Get mail addresses
+        mails = getfields(self.win.mails)
+        if mails:
+            contact['mails'] = mails
+
+        # Get comments
+        comments = self.win.comments.toPlainText()
+        if comments:
+            contact['comments'] = str(comments)
+
+        return dst, contact
+
+
+    def rename(self, dst):
+        '''
+        Rename contact file
+        '''
+
+        os.rename(self.src, dst)
+        self.src = dst
+        self.showsave()
+
+
+    def save(self):
+        '''
+        Save data
+        '''
+
+        dst, contact = self.collect()
+
+        if dst:
+            # Rename the file if needs be
+            if self.src and self.src != dst:
+                if os.path.lexists(dst):
+                    msg = OVERWRITE % self.win.names.text().strip()
+                    rpl = self.overwritemsg.question(self,
+                                                     "Overwrite Contact?",
+                                                     msg)
+                    if rpl == QtWidgets.QMessageBox.Yes:
+                        self.rename(dst)
+                else:
+                    self.rename(dst)
+
+            # Write contact data
+            if not os.path.lexists(dst) or contact != self.contact:
+                with open(dst, 'w') as fhl:
+                    yaml.dump(contact, fhl,
+                              allow_unicode=True,
+                              default_flow_style=False,
+                              indent=4,
+                              Dumper=yaml.SafeDumper)
+                self.contact = contact
+                self.src = dst
+                self.showsave()
+        else:
+            self.win.status.showMessage("Can't save a contact without names")
+
+
+    def changetitle(self, names):
+        '''
+        Change window title
+        '''
+
+        if names:
+            self.win.setWindowTitle(names)
+        else:
+            self.win.setWindowTitle(__doc__)
+
+
+def main():
+    '''
+    Main loop
+    '''
+
+    # Arguments
+    parser = argparse.ArgumentParser(description=__doc__ + '.')
+    parser.add_argument('path', nargs='?')
+    args = parser.parse_args()
+
+    # Load contact data
+    try:
+        with open(args.path) as fhl:
+            contact = yaml.load(fhl, Loader=yaml.SafeLoader)
+    except (IOError, TypeError):
+        contact = {}
+
+    # Open window
+    app = QtWidgets.QApplication(sys.argv)
+    mainwin = MainWindow(args.path, contact)
+    mainwin.show()
+
+    return app.exec_()
+
+
+if __name__ == '__main__':
+    sys.exit(main())

@@ -1,0 +1,187 @@
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="">
+  <property name="windowTitle"><string>Address Book</string></property>
+  <widget class="QWidget">
+   <layout class="QVBoxLayout">
+    <property name="margin"><number>10</number></property>
+
+    <item>
+     <widget class="QGroupBox">
+      <property name="title"><string>Name(s)</string></property>
+      <layout class="QHBoxLayout">
+       <item>
+        <widget class="QLineEdit" name="names">
+         <property name="placeholderText"><string>John and Jane Doe</string></property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+
+    <item>
+     <widget class="QGroupBox">
+      <property name="title"><string>Address</string></property>
+      <layout class="QVBoxLayout">
+
+       <item>
+        <widget class="QTextEdit" name="address">
+         <property name="placeholderText"><string>42, Downing Street
+London SW1A 2AA
+UNITED KINGDOM</string></property>
+        </widget>
+       </item>
+
+       <item>
+        <widget class="QComboBox" name="addresslabel">
+         <property name="editable"><bool>true</bool></property>
+         <item><property name="text"><string></string></property></item>
+         <item><property name="text"><string>Home</string></property></item>
+         <item><property name="text"><string>Work</string></property></item>
+        </widget>
+       </item>
+
+      </layout>
+     </widget>
+    </item>
+
+    <item>
+     <widget class="QGroupBox">
+      <property name="title"><string>Phone Number(s)</string></property>
+
+      <layout class="QHBoxLayout">
+       <item>
+        <layout class="QGridLayout" name="phones">
+
+         <item row="0" column="0">
+          <widget class="QLineEdit" name="firstPhone">
+           <property name="placeholderText"><string>+44 0123 456789</string></property>
+          </widget>
+         </item>
+
+         <item row="0" column="1">
+          <widget class="QComboBox" name="firstPhoneLabel">
+           <property name="editable"><bool>true</bool></property>
+           <item><property name="text"><string></string></property></item>
+           <item><property name="text"><string>Home</string></property></item>
+           <item><property name="text"><string>Work</string></property></item>
+           <item><property name="text"><string>Mobile</string></property></item>
+           <item><property name="text"><string>Fax</string></property></item>
+          </widget>
+         </item>
+
+        </layout>
+       </item>
+
+       <item>
+        <widget class="QPushButton" name="addPhoneButton">
+         <property name="text"><string>+</string></property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+        </widget>
+       </item>
+
+      </layout>
+     </widget>
+    </item>
+
+    <item>
+     <widget class="QGroupBox">
+      <property name="title"><string>e-Mail Address(es)</string></property>
+
+      <layout class="QHBoxLayout">
+       <item>
+        <layout class="QGridLayout" name="mails">
+
+         <item row="0" column="0">
+          <widget class="QLineEdit" name="firstMail">
+           <property name="placeholderText"><string>John.Doe@example.com</string></property>
+          </widget>
+         </item>
+
+         <item row="0" column="1">
+          <widget class="QComboBox" name="firstMailLabel">
+           <property name="editable"><bool>true</bool></property>
+           <item><property name="text"><string></string></property></item>
+           <item><property name="text"><string>Home</string></property></item>
+           <item><property name="text"><string>Work</string></property></item>
+          </widget>
+         </item>
+
+        </layout>
+       </item>
+
+       <item>
+        <widget class="QPushButton" name="addMailButton">
+         <property name="text"><string>+</string></property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+        </widget>
+       </item>
+
+      </layout>
+     </widget>
+    </item>
+
+    <item>
+     <widget class="QGroupBox">
+      <property name="title"><string>Comment(s)</string></property>
+      <layout class="QHBoxLayout">
+       <item>
+        <widget class="QTextEdit" name="comments" />
+       </item>
+      </layout>
+     </widget>
+    </item>
+
+   </layout>
+  </widget>
+  <widget class="QToolBar">
+   <addaction name="saveAction" />
+  </widget>
+  <action name="saveAction">
+   <property name="text"><string>Save (Ctrl+S)</string></property>
+   <property name="shortcut"><string>Ctrl+S</string></property>
+  </action>
+  <widget class="QStatusBar" name="status" />
+ </widget>
+ <connections>
+
+  <connection>
+   <sender>saveAction</sender>
+   <signal>triggered(bool)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>save()</slot>
+  </connection>
+
+  <connection>
+   <sender>addPhoneButton</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>addphone()</slot>
+  </connection>
+
+  <connection>
+   <sender>addMailButton</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>addmail()</slot>
+  </connection>
+
+  <connection>
+   <sender>names</sender>
+   <signal>textEdited(QString)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>changetitle()</slot>
+  </connection>
+
+ </connections>
+</ui>
